@@ -3,6 +3,7 @@ Finance app serializers.
 """
 from decimal import Decimal
 from rest_framework import serializers
+from apps.core.utils import convert_currency
 from .models import Account, Category, Month, Transaction, Budget
 
 
@@ -18,6 +19,16 @@ class AccountSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            profile = request.user.profile
+            view_curr = profile.currency
+            ret['balance'] = str(convert_currency(instance.balance, instance.currency, view_curr))
+            ret['currency'] = view_curr
+        return ret
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -50,6 +61,20 @@ class MonthSerializer(serializers.ModelSerializer):
         import calendar
         return f"{calendar.month_name[obj.month]} {obj.year}"
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            profile = request.user.profile
+            view_curr = profile.currency
+            base_curr = getattr(profile, 'base_currency', 'USD')
+            ret['opening_balance'] = str(convert_currency(instance.opening_balance, base_curr, view_curr))
+            ret['closing_balance'] = str(convert_currency(instance.closing_balance, base_curr, view_curr))
+            ret['total_income'] = str(convert_currency(instance.total_income, base_curr, view_curr))
+            ret['total_expenses'] = str(convert_currency(instance.total_expenses, base_curr, view_curr))
+            ret['total_savings'] = str(convert_currency(instance.total_savings, base_curr, view_curr))
+        return ret
+
 
 class TransactionListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for list views."""
@@ -66,6 +91,16 @@ class TransactionListSerializer(serializers.ModelSerializer):
             'account', 'account_name', 'note', 'created_at',
         ]
         read_only_fields = ['id', 'created_at']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            profile = request.user.profile
+            view_curr = profile.currency
+            tx_curr = instance.account.currency if instance.account else getattr(profile, 'base_currency', 'USD')
+            ret['amount'] = str(convert_currency(instance.amount, tx_curr, view_curr))
+        return ret
 
 
 class TransactionDetailSerializer(serializers.ModelSerializer):
@@ -99,6 +134,16 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
         instance.month = None
         return super().update(instance, validated_data)
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            profile = request.user.profile
+            view_curr = profile.currency
+            tx_curr = instance.account.currency if instance.account else getattr(profile, 'base_currency', 'USD')
+            ret['amount'] = str(convert_currency(instance.amount, tx_curr, view_curr))
+        return ret
+
 
 class BudgetSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
@@ -121,3 +166,24 @@ class BudgetSerializer(serializers.ModelSerializer):
         budget = super().create(validated_data)
         budget.recalculate_spent()
         return budget
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            profile = request.user.profile
+            view_curr = profile.currency
+            base_curr = getattr(profile, 'base_currency', 'USD')
+            
+            # Convert amount and spent
+            conv_amount = convert_currency(instance.amount, base_curr, view_curr)
+            conv_spent = convert_currency(instance.spent, base_curr, view_curr)
+            
+            ret['amount'] = str(conv_amount)
+            ret['spent'] = str(conv_spent)
+            ret['remaining'] = str(max(conv_amount - conv_spent, Decimal('0')))
+            if conv_amount == Decimal('0.00'):
+                ret['percentage_used'] = 0.0
+            else:
+                ret['percentage_used'] = min(round(float(conv_spent / conv_amount) * 100, 1), 100.0)
+        return ret

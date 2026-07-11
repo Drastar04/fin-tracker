@@ -92,19 +92,30 @@ class Month(models.Model):
         return f"{self.user.email} — {self.year}/{self.month:02d}"
 
     def recalculate(self):
-        """Recalculate month totals from transactions."""
-        from django.db.models import Sum
-        income = self.transactions.filter(
-            transaction_type='income'
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-        expenses = self.transactions.filter(
-            transaction_type='expense'
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-
+        """Recalculate month totals from transactions in the user's base currency."""
+        from apps.core.utils import convert_currency
+        
+        # Get base currency
+        profile = getattr(self.user, 'profile', None)
+        base_curr = getattr(profile, 'base_currency', 'USD') if profile else 'USD'
+        
+        income = Decimal('0.00')
+        expenses = Decimal('0.00')
+        
+        # Sum transactions, converting each to base_currency dynamically
+        for tx in self.transactions.select_related('account').all():
+            tx_curr = tx.account.currency if (tx.account and tx.account.currency) else base_curr
+            converted_amount = convert_currency(tx.amount, tx_curr, base_curr)
+            
+            if tx.transaction_type == 'income':
+                income += converted_amount
+            elif tx.transaction_type == 'expense':
+                expenses += converted_amount
+                
         self.total_income = income
         self.total_expenses = expenses
         self.closing_balance = self.opening_balance + income - expenses
-        self.total_savings = max(self.closing_balance - self.opening_balance, Decimal('0'))
+        self.total_savings = max(self.closing_balance - self.opening_balance, Decimal('0.00'))
         self.save(update_fields=['total_income', 'total_expenses', 'closing_balance', 'total_savings', 'updated_at'])
 
 

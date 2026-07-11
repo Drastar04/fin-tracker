@@ -14,11 +14,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = [
-            'id', 'currency', 'currency_symbol', 'country', 'timezone',
+            'id', 'currency', 'base_currency', 'currency_symbol', 'country', 'timezone',
             'default_monthly_opening_balance', 'theme', 'onboarding_completed',
             'avatar_url', 'created_at', 'updated_at',
         ]
-        read_only_fields = ['id', 'currency_symbol', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'base_currency', 'currency_symbol', 'created_at', 'updated_at']
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -80,6 +80,8 @@ class OnboardingSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+        if 'currency' in validated_data:
+            instance.base_currency = validated_data['currency']
         instance.onboarding_completed = True
         instance.save()
         return instance
