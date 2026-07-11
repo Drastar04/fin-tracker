@@ -1,0 +1,188 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base reset & design tokens ── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --radius: 12px;
+    --transition: 200ms cubic-bezier(.4,0,.2,1);
+    --spring: 300ms cubic-bezier(.34,1.56,.64,1);
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+
+  body {
+    @apply bg-surface-50 text-surface-900 font-sans;
+    @apply dark:bg-surface-950 dark:text-surface-50;
+    min-height: 100dvh;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-surface-300 dark:bg-surface-600 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-surface-400 dark:bg-surface-500; }
+
+  /* Focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white;
+    @apply dark:ring-offset-surface-900;
+  }
+
+  /* Selection */
+  ::selection { @apply bg-brand-200 text-brand-900 dark:bg-brand-800 dark:text-brand-100; }
+}
+
+/* ── Utility components ── */
+@layer components {
+  /* Glass card */
+  .glass {
+    @apply bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm;
+    @apply border border-white/60 dark:border-surface-700/60;
+  }
+
+  .glass-strong {
+    @apply bg-white/95 dark:bg-surface-800/95 backdrop-blur-md;
+    @apply border border-surface-200/80 dark:border-surface-700/80;
+  }
+
+  /* Card */
+  .card {
+    @apply bg-white dark:bg-surface-800 rounded-2xl shadow-card;
+    @apply border border-surface-100 dark:border-surface-700/50;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200;
+    @apply hover:shadow-lg hover:-translate-y-0.5;
+    @apply dark:hover:bg-surface-700/80;
+  }
+
+  /* Input base */
+  .input-base {
+    @apply w-full px-3.5 py-2.5 rounded-xl text-sm font-medium;
+    @apply bg-surface-50 dark:bg-surface-900/60;
+    @apply border border-surface-200 dark:border-surface-700;
+    @apply text-surface-900 dark:text-surface-50;
+    @apply placeholder:text-surface-400 dark:placeholder:text-surface-500;
+    @apply focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-400;
+    @apply transition-all duration-150;
+  }
+
+  .input-base.error {
+    @apply border-danger ring-danger/20;
+  }
+
+  /* Buttons */
+  .btn { @apply inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-150 select-none; }
+  .btn:disabled { @apply opacity-50 cursor-not-allowed; }
+
+  .btn-primary {
+    @apply btn px-4 py-2.5 text-sm bg-brand-600 text-white;
+    @apply hover:bg-brand-700 active:scale-95 shadow-sm;
+    @apply focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply btn px-4 py-2.5 text-sm;
+    @apply bg-surface-100 dark:bg-surface-700/70 text-surface-700 dark:text-surface-200;
+    @apply hover:bg-surface-200 dark:hover:bg-surface-700 active:scale-95;
+    @apply border border-surface-200 dark:border-surface-600;
+  }
+
+  .btn-ghost {
+    @apply btn px-3 py-2 text-sm text-surface-600 dark:text-surface-400;
+    @apply hover:bg-surface-100 dark:hover:bg-surface-800 active:scale-95;
+  }
+
+  .btn-danger {
+    @apply btn px-4 py-2.5 text-sm bg-danger text-white;
+    @apply hover:bg-red-600 active:scale-95 shadow-sm;
+  }
+
+  .btn-icon {
+    @apply btn p-2 rounded-xl text-surface-500 dark:text-surface-400;
+    @apply hover:bg-surface-100 dark:hover:bg-surface-700 active:scale-90;
+  }
+
+  /* Badge */
+  .badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold; }
+  .badge-income  { @apply badge bg-income-light text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400; }
+  .badge-expense { @apply badge bg-expense-light text-red-700 dark:bg-red-900/40 dark:text-red-400; }
+  .badge-transfer{ @apply badge bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300; }
+
+  /* Skeleton shimmer */
+  .skeleton {
+    @apply rounded-xl bg-surface-200 dark:bg-surface-700 animate-pulse;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.08) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Sidebar nav item */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium;
+    @apply text-surface-600 dark:text-surface-400;
+    @apply hover:bg-surface-100 dark:hover:bg-surface-800;
+    @apply hover:text-surface-900 dark:hover:text-surface-100;
+    @apply transition-all duration-150;
+  }
+
+  .nav-item.active {
+    @apply bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400;
+    @apply font-semibold;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply h-1.5 rounded-full bg-surface-200 dark:bg-surface-700 overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+  }
+
+  /* Stat card */
+  .stat-card {
+    @apply card p-5 flex flex-col gap-3;
+  }
+
+  /* Divider */
+  .divider { @apply border-t border-surface-100 dark:border-surface-800; }
+
+  /* Modal overlay */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+    @apply bg-black/50 dark:bg-black/70 backdrop-blur-sm;
+  }
+
+  .modal-content {
+    @apply glass-strong rounded-3xl shadow-modal w-full max-w-md;
+    @apply animate-scale-in;
+  }
+
+  /* Toast */
+  .toast {
+    @apply flex items-center gap-3 px-4 py-3 rounded-2xl shadow-modal;
+    @apply bg-surface-900 dark:bg-surface-800 text-white text-sm font-medium;
+    @apply min-w-[280px] max-w-sm;
+  }
+}
+
+/* ── Recharts overrides ── */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  @apply !bg-surface-900 dark:!bg-surface-800 !border-surface-700 !rounded-xl !shadow-modal;
+}
+
+.recharts-cartesian-grid line { @apply !stroke-surface-200 dark:!stroke-surface-700/50; }
+.recharts-text { @apply !fill-surface-500 dark:!fill-surface-400 !text-xs; }
