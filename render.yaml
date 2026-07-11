@@ -34,6 +34,10 @@ services:
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
+    routes:
+      - source: /*
+        destination: /index.html
+        type: rewrite
     envVars:
       - key: VITE_API_URL
         sync: false # Set this in the Render dashboard to: https://finance-tracker-backend.onrender.com/api
